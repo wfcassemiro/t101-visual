@@ -1,0 +1,367 @@
+<?php
+session_start();
+require_once __DIR__ . '/../config/database.php';
+
+// Verificar se o usuário tem acesso
+if (!function_exists('hasVideotecaAccess') || !hasVideotecaAccess()) {
+    header('Location: /planos.php?redirect=videoteca');
+    exit();
+}
+
+$page_title = 'Videoteca de Palestras';
+$page_description = 'Acesse nossa videoteca com quase 400 palestras especializadas em tradução, interpretação e revisão.';
+
+// Parâmetros de busca e filtro
+$search = $_GET['search'] ?? '';
+$category = $_GET['category'] ?? '';
+$sort_order = $_GET['sort'] ?? 'season_asc';
+
+// Conectar ao banco e buscar palestras
+try {
+    $db = getConnection();
+    
+    // Query base
+    $query = "SELECT * FROM lectures WHERE 1=1";
+    $params = [];
+
+    // Adicionar filtros
+    if (!empty($search)) {
+        $query .= " AND (title LIKE ? OR speaker LIKE ? OR description LIKE ?)";
+        $searchTerm = "%{$search}%";
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+    }
+
+    if (!empty($category)) {
+        $query .= " AND category = ?";
+        $params[] = $category;
+    }
+
+    $stmt = $db->prepare($query);
+    $stmt->execute($params);
+    $lectures = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Buscar categorias para o select
+    $categoryStmt = $db->prepare("SELECT DISTINCT category FROM lectures WHERE category IS NOT NULL AND category != '' ORDER BY category");
+    $categoryStmt->execute();
+    $categories = $categoryStmt->fetchAll(PDO::FETCH_COLUMN);
+
+    // Buscar o ID da palestra mais nova
+    $newestStmt = $db->prepare("SELECT id FROM lectures ORDER BY created_at DESC LIMIT 1");
+    $newestStmt->execute();
+    $newest_lecture_id = $newestStmt->fetchColumn();
+
+} catch (Exception $e) {
+    error_log("Erro na videoteca: " . $e->getMessage());
+    $lectures = [];
+    $categories = [];
+    $newest_lecture_id = null;
+}
+
+// Função para extrair informações do padrão S##E##
+function extractSeasonEpisode($title) {
+    if (preg_match('/^S(\d{1,2})(?:E(\d{1,2}))?/i', $title, $matches)) {
+        $season = (int)$matches[1];
+        $episode = isset($matches[2]) ? (int)$matches[2] : 0;
+        return ['season' => $season, 'episode' => $episode, 'has_pattern' => true];
+    }
+    return ['season' => 999, 'episode' => 999, 'has_pattern' => false];
+}
+
+// Função de comparação personalizada para ordenação
+function sortLectures($lectures, $sort_order) {
+    $withPattern = [];
+    $withoutPattern = [];
+    
+    foreach ($lectures as $lecture) {
+        $info = extractSeasonEpisode($lecture['title']);
+        if ($info['has_pattern']) {
+            $lecture['_sort_info'] = $info;
+            $withPattern[] = $lecture;
+        } else {
+            $withoutPattern[] = $lecture;
+        }
+    }
+    
+    usort($withPattern, function($a, $b) use ($sort_order) {
+        $infoA = $a['_sort_info'];
+        $infoB = $b['_sort_info'];
+        
+        if ($infoA['season'] !== $infoB['season']) {
+            $result = $infoA['season'] - $infoB['season'];
+            return ($sort_order === 'season_desc') ? -$result : $result;
+        }
+        
+        $result = $infoA['episode'] - $infoB['episode'];
+        return ($sort_order === 'season_desc') ? -$result : $result;
+    });
+    
+    usort($withoutPattern, function($a, $b) use ($sort_order) {
+        $result = strcasecmp($a['title'], $b['title']);
+        return ($sort_order === 'season_desc') ? -$result : $result;
+    });
+    
+    return array_merge($withPattern, $withoutPattern);
+}
+
+// Aplicar ordenação
+if (!empty($lectures)) {
+    switch ($sort_order) {
+        case 'season_asc':
+        case 'season_desc':
+            $lectures = sortLectures($lectures, $sort_order);
+            break;
+        case 'alpha_asc':
+            usort($lectures, function($a, $b) {
+                return strcasecmp($a['title'], $b['title']);
+            });
+            break;
+        case 'alpha_desc':
+            usort($lectures, function($a, $b) {
+                return strcasecmp($b['title'], $a['title']);
+            });
+            break;
+        case 'date_desc':
+            usort($lectures, function($a, $b) {
+                return strtotime($b['created_at']) - strtotime($a['created_at']);
+            });
+            break;
+        case 'date_asc':
+            usort($lectures, function($a, $b) {
+                return strtotime($a['created_at']) - strtotime($b['created_at']);
+            });
+            break;
+    }
+}
+
+$total_lectures = count($lectures);
+
+include __DIR__ . '/vision/includes/head.php';
+?>
+
+<?php include __DIR__ . '/vision/includes/header.php'; ?>
+
+<?php include __DIR__ . '/vision/includes/sidebar.php'; ?>
+
+<main class="main-content">
+    <!-- Hero da Videoteca -->
+    <section class="glass-hero">
+        <h1 class="videoteca-title">
+            <i class="fas fa-video"></i>Videoteca de Palestras
+        </h1>
+        <p>Acesse nosso catálogo completo com quase 400 palestras especializadas em tradução, interpretação e revisão.</p>
+        <?php if (function_exists('isAdmin') && isAdmin()): ?>
+        <div class="admin-section">
+            <a href="/admin/palestras.php" class="btn btn-admin">
+                <i class="fas fa-cogs"></i> Gerenciar Palestras
+            </a>
+        </div>
+        <?php endif; ?>
+    </section>
+
+    <!-- Filtros -->
+    <div class="videoteca-filtros">
+        <form method="GET" class="filtros-grid">
+            <div>
+                <label for="search" class="form-label">Buscar</label>
+                <input type="text" name="search" id="search" 
+                       value="<?php echo htmlspecialchars($search); ?>"
+                       placeholder="Título, palestrante ou descrição...">
+            </div>
+
+            <div>
+                <label for="category" class="form-label">Categoria</label>
+                <select name="category" id="category">
+                    <option value="">Todas as categorias</option>
+                    <?php foreach($categories as $cat): ?>
+                    <option value="<?php echo htmlspecialchars($cat); ?>" <?php echo $category === $cat ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($cat); ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div>
+                <label for="sort" class="form-label">Ordem</label>
+                <select name="sort" id="sort">
+                    <option value="season_asc" <?php echo $sort_order === 'season_asc' ? 'selected' : ''; ?>>
+                        🎬 Sequência S##E## (Crescente)
+                    </option>
+                    <option value="season_desc" <?php echo $sort_order === 'season_desc' ? 'selected' : ''; ?>>
+                        🎬 Sequência S##E## (Decrescente)
+                    </option>
+                    <option value="alpha_asc" <?php echo $sort_order === 'alpha_asc' ? 'selected' : ''; ?>>
+                        📝 Alfabética A-Z
+                    </option>
+                    <option value="alpha_desc" <?php echo $sort_order === 'alpha_desc' ? 'selected' : ''; ?>>
+                        📝 Alfabética Z-A
+                    </option>
+                    <option value="date_desc" <?php echo $sort_order === 'date_desc' ? 'selected' : ''; ?>>
+                        📅 Mais Recentes
+                    </option>
+                    <option value="date_asc" <?php echo $sort_order === 'date_asc' ? 'selected' : ''; ?>>
+                        📅 Mais Antigas
+                    </option>
+                </select>
+            </div>
+
+            <div class="search-button-container">
+                <button type="submit" class="cta-btn search-btn">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Informações dos resultados -->
+    <div class="results-info">
+        <p class="results-text">
+            Exibindo <?php echo count($lectures); ?> de <?php echo $total_lectures; ?> palestras
+            - <strong>Todas em uma página</strong> - Ordem: <strong>
+            <?php 
+            switch($sort_order) {
+                case 'season_asc': echo '🎬 Sequência S##E## (Crescente)'; break;
+                case 'season_desc': echo '🎬 Sequência S##E## (Decrescente)'; break;
+                case 'alpha_asc': echo '📝 Alfabética A-Z'; break;
+                case 'alpha_desc': echo '📝 Alfabética Z-A'; break;
+                case 'date_desc': echo '📅 Mais Recentes'; break;
+                case 'date_asc': echo '📅 Mais Antigas'; break;
+                default: echo '🎬 Sequência S##E## (Crescente)'; break;
+            }
+            ?>
+            </strong>
+        </p>
+    </div>
+
+    <!-- Grid de vídeos -->
+    <div class="video-grid">
+        <?php if (empty($lectures)): ?>
+            <div class="no-results">
+                <i class="fas fa-search"></i>
+                <h3>Nenhuma palestra encontrada</h3>
+                <p>Tente ajustar os filtros de busca.</p>
+            </div>
+        <?php else: ?>
+            <?php foreach($lectures as $lecture): ?>
+            <?php
+            $seasonInfo = extractSeasonEpisode($lecture['title']);
+            $hasPattern = $seasonInfo['has_pattern'];
+            ?>
+            <div class="video-card fade-item" onclick="location.href='/palestra.php?id=<?php echo $lecture['id']; ?>'">
+                <!-- Container com proporção 16:9 -->
+                <div class="video-thumb-container">
+                    <div class="video-thumb">
+                        <?php if (!empty($lecture['thumbnail_url'])): ?>
+                            <img src="<?php echo htmlspecialchars($lecture['thumbnail_url']); ?>" 
+                                 alt="<?php echo htmlspecialchars($lecture['title']); ?>" 
+                                 class="video-thumbnail">
+                        <?php else: ?>
+                            <div class="video-placeholder">
+                                <div class="placeholder-icon">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <div class="placeholder-text">Palestra</div>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($lecture['id'] == $newest_lecture_id): ?>
+                        <div class="badge-new">
+                            <i class="fas fa-star"></i>NOVA
+                        </div>
+                        <?php endif; ?>
+
+                        <div class="video-overlay">
+                            <div class="play-button">
+                                <i class="fas fa-play"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="video-info">
+                    <h3><?php echo htmlspecialchars($lecture['title']); ?></h3>
+                    <p class="video-speaker"><?php echo htmlspecialchars($lecture['speaker']); ?></p>
+                    <p class="video-desc"><?php echo htmlspecialchars(substr($lecture['description'], 0, 120)) . '...'; ?></p>
+
+                    <div class="video-meta">
+                        <span class="video-category"><?php echo htmlspecialchars($lecture['category']); ?></span>
+                        <span class="video-duration">
+                            <i class="fas fa-clock"></i><?php echo $lecture['duration_minutes']; ?> min
+                        </span>
+                    </div>
+
+                    <?php if ($lecture['is_featured']): ?>
+                    <div class="featured-section">
+                        <span class="tag featured-tag">
+                            <i class="fas fa-star"></i>Destaque
+                        </span>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+
+    <!-- Estatísticas da ordenação -->
+    <div class="stats-section">
+        <h3 class="stats-title">
+            <i class="fas fa-chart-bar"></i> Estatísticas da Videoteca
+        </h3>
+        <div class="stats-grid">
+            <?php
+            $withPattern = array_filter($lectures, function($l) { 
+                return extractSeasonEpisode($l['title'])['has_pattern']; 
+            });
+            $withoutPattern = array_filter($lectures, function($l) { 
+                return !extractSeasonEpisode($l['title'])['has_pattern']; 
+            });
+            
+            $seasons = [];
+            foreach ($withPattern as $lecture) {
+                $info = extractSeasonEpisode($lecture['title']);
+                $seasons[$info['season']] = true;
+            }
+            ?>
+            
+            <div class="stat-item">
+                <div class="stat-value purple">
+                    <?php echo count($withPattern); ?>
+                </div>
+                <div class="stat-label">
+                    <i class="fas fa-play-circle"></i> Com padrão S##E##
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-value blue">
+                    <?php echo count($seasons); ?>
+                </div>
+                <div class="stat-label">
+                    <i class="fas fa-list-ol"></i> Temporadas diferentes
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-value gray">
+                    <?php echo count($withoutPattern); ?>
+                </div>
+                <div class="stat-label">
+                    <i class="fas fa-font"></i> Ordenação alfabética
+                </div>
+            </div>
+            
+            <div class="stat-item">
+                <div class="stat-value green">
+                    <?php echo count($lectures); ?>
+                </div>
+                <div class="stat-label">
+                    <i class="fas fa-video"></i> Total exibido
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<?php include __DIR__ . '/vision/includes/footer.php'; ?>

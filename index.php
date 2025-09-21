@@ -1,0 +1,1563 @@
+<?php
+session_start(); // CRÍTICO: Iniciar sessão para funções de autenticação funcionarem
+
+// Verifica se o usuário está logado e redireciona para videoteca
+if (function_exists('isLoggedIn') && isLoggedIn()) {
+    header('Location: /videoteca.php');
+    exit();
+}
+
+// Configurações da página
+$page_title = 'Translators101 - Palestras com profissionais experientes';
+$page_description = 'Palestras sobre tradução e interpretação com dicas e informações importantes para a evolução de sua carreira.';
+
+// Inclui o arquivo de funções de autenticação e conexão com o banco de dados
+require_once __DIR__ . '/config/database.php';
+
+// Inclui o cabeçalho Vision
+include __DIR__ . '/vision/includes/head.php';
+?>
+
+<?php include __DIR__ . '/vision/includes/header.php'; ?>
+
+<?php include __DIR__ . '/vision/includes/sidebar.php'; ?>
+
+<main class="main-content">
+    <!-- Hero Section - Otimizado para Conversão -->
+    <section class="glass-hero fade-item" id="home">
+        <div class="hero-logo">
+            <div class="translators-logo">
+                <img src="/images/Logo T101-01.png" alt="Translators 101" class="main-logo">
+            </div>
+        </div>
+        
+        <div class="hero-content-conversion">
+            <h1 class="hero-headline">Transforme sua carreira em tradução com mais de 380 palestras especializadas</h1>
+            <p class="hero-subheadline">Acesse conteúdo exclusivo dos melhores profissionais do mercado e acelere seu crescimento profissional hoje mesmo!</p>
+            
+            <div class="social-proof-hero">
+                <div class="proof-item">
+                    <i class="fas fa-users"></i>
+                    <span><strong>+1.500</strong> tradutores já confiam em nós</span>
+                </div>
+                <div class="proof-item">
+                    <i class="fas fa-video"></i>
+                    <span><strong>+380</strong> palestras disponíveis</span>
+                </div>
+                <div class="proof-item">
+                    <i class="fas fa-calendar-week"></i>
+                    <span><strong>Nova palestra</strong> toda semana</span>
+                </div>
+            </div>
+            
+            <div class="hero-cta-section">
+                <a href="#planos" class="cta-btn cta-primary pulse-animation">
+                    <i class="fas fa-rocket"></i> Quero começar agora
+                </a>
+                <p class="hero-guarantee">✅ Acesso imediato • ✅ Cancele quando quiser • ✅ Garantia total</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Combined Value Proposition and Problem/Solution Section -->
+    <section class="value-problem-combined fade-item">
+        <div class="value-problem-grid">
+            <!-- Value Proposition - Left Side -->
+            <div class="glass-section value-section">
+                <h2 class="section-title">Por que +1.500 profissionais escolheram a Translators101?</h2>
+                
+                <div class="value-grid-compact">
+                    <div class="value-card fade-item">
+                        <div class="value-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h3>Aprenda com os melhores</h3>
+                        <p>Palestras ministradas por <strong>profissionais reconhecidos</strong> no mercado, com experiência real e casos práticos.</p>
+                    </div>
+                    
+                    <div class="value-card fade-item">
+                        <div class="value-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h3>No seu ritmo</h3>
+                        <p><strong>Acesso 24/7</strong> a todo conteúdo. Assista quando e onde quiser, quantas vezes precisar.</p>
+                    </div>
+                    
+                    <div class="value-card fade-item">
+                        <div class="value-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <h3>Carreira acelerada</h3>
+                        <p>Conteúdo <strong>prático e aplicável</strong> que você usa imediatamente para aumentar seus ganhos.</p>
+                    </div>
+                    
+                    <div class="value-card fade-item">
+                        <div class="value-icon">
+                            <i class="fas fa-certificate"></i>
+                        </div>
+                        <h3>Certificados reconhecidos</h3>
+                        <p><strong>Certificados automáticos</strong> para comprovar sua educação continuada no mercado.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Problem/Solution - Right Side -->
+            <div class="glass-section problem-solution-section">
+                <div class="problem-section">
+                    <h2 class="problem-title">Você está enfrentando estes desafios?</h2>
+                    <div class="problems-list">
+                        <div class="problem-item">❌ Dificuldade para se atualizar no mercado</div>
+                        <div class="problem-item">❌ Falta de networking com outros profissionais</div>
+                        <div class="problem-item">❌ Cursos caros que não entregam valor prático</div>
+                        <div class="problem-item">❌ Conteúdo desatualizado ou genérico</div>
+                    </div>
+                </div>
+                
+                <div class="solution-section">
+                    <h2 class="solution-title">A Translators101 resolve todos eles:</h2>
+                    <div class="solutions-list">
+                        <div class="solution-item">✅ Conteúdo sempre atualizado com tendências do mercado</div>
+                        <div class="solution-item">✅ Comunidade ativa de +1.500 profissionais</div>
+                        <div class="solution-item">✅ Preço justo com acesso a +380 palestras</div>
+                        <div class="solution-item">✅ Conteúdo específico por área de atuação</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Expertise Areas - Enhanced -->
+    <section class="expertise-areas fade-item">
+        <div class="glass-section">
+            <h2 class="section-title">Domine todas as áreas da tradução e interpretação</h2>
+            <p class="section-subtitle">Conteúdo especializado para cada nicho do mercado</p>
+            
+            <div class="expertise-grid">
+                <div class="expertise-card fade-item">
+                    <i class="fas fa-gamepad"></i>
+                    <h4>Tradução de jogos</h4>
+                    <p>Localização, adaptação cultural e técnicas específicas para games</p>
+                </div>
+                <div class="expertise-card fade-item">
+                    <i class="fas fa-film"></i>
+                    <h4>Dublagem & legendagem</h4>
+                    <p>Técnicas profissionais para audiovisual e streaming</p>
+                </div>
+                <div class="expertise-card fade-item">
+                    <i class="fas fa-microphone"></i>
+                    <h4>Interpretação</h4>
+                    <p>Simultânea, consecutiva e técnicas avançadas</p>
+                </div>
+                <div class="expertise-card fade-item">
+                    <i class="fas fa-cogs"></i>
+                    <h4>Tradução técnica</h4>
+                    <p>Manuais, documentação e textos especializados</p>
+                </div>
+                <div class="expertise-card fade-item">
+                    <i class="fas fa-heartbeat"></i>
+                    <h4>Área da saúde</h4>
+                    <p>Terminologia médica e farmacêutica</p>
+                </div>
+                <div class="expertise-card fade-item">
+                    <i class="fas fa-book"></i>
+                    <h4>Tradução literária</h4>
+                    <p>Quadrinhos, romances e adaptação criativa</p>
+                </div>
+            </div>
+            
+            <div class="expertise-cta">
+                <a href="#planos" class="cta-btn cta-secondary">
+                    <i class="fas fa-eye"></i> Ver todas as 380+ palestras
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof - Testimonials -->
+    <section class="testimonials-enhanced fade-item">
+        <div class="glass-section">
+            <h2 class="section-title">Veja o que nossos assinantes estão dizendo</h2>
+            <p class="section-subtitle">(Depoimentos reais de profissionais que transformaram suas carreiras)</p>
+            
+            <div class="testimonials-grid">
+                <div class="testimonial-video fade-item">
+                    <div class="video-wrapper">
+                        <iframe src="https://www.youtube.com/embed/7Rp3-rb4fcs" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <div class="testimonial-info">
+                        <p><strong>"Aumentei meus ganhos em 40% depois da Translators101"</strong></p>
+                    </div>
+                </div>
+                
+                <div class="testimonial-video fade-item">
+                    <div class="video-wrapper">
+                        <iframe src="https://www.youtube.com/embed/dlf6fIX4nAc" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <div class="testimonial-info">
+                        <p><strong>"Conteúdo que realmente faz diferença na prática"</strong></p>
+                    </div>
+                </div>
+                
+                <div class="testimonial-video fade-item">
+                    <div class="video-wrapper">
+                        <iframe src="https://www.youtube.com/embed/LuOWNKPEN3A" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <div class="testimonial-info">
+                        <p><strong>"A melhor comunidade de tradutores do Brasil"</strong></p>
+                    </div>
+                </div>
+                
+                <div class="testimonial-video fade-item">
+                    <div class="video-wrapper">
+                        <iframe src="https://www.youtube.com/embed/IZAL_0j7ep8" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <div class="testimonial-info">
+                        <p><strong>"Investimento que se paga rapidamente"</strong></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section - Conversion Optimized -->
+    <section class="pricing-conversion fade-item" id="planos">
+        <div class="glass-section">
+            <div class="pricing-header">
+                <h2 class="section-title">Escolha seu plano e comece hoje mesmo</h2>
+                <p class="pricing-subtitle">Acesso imediato a todas as 380+ palestras • Sem período mínimo • Cancele quando quiser</p>
+                
+                <div class="urgency-banner">
+                    <i class="fas fa-fire"></i>
+                    <span><strong>Oferta especial:</strong> Acesso completo por menos de R$ 2,00 por dia!</span>
+                </div>
+            </div>
+
+            <div class="pricing-grid-conversion">
+                <div class="price-card popular fade-item">
+                    <div class="badge-container">
+                        <div class="badge popular-badge">🔥 Mais popular</div>
+                    </div>
+                    <h4>Mensal</h4>
+                    <div class="price-section">
+                        <div class="price">R$ 53</div>
+                        <div class="price-per-day">R$ 1,77/dia</div>
+                    </div>
+                    <div class="price-benefits">
+                        <div class="benefit">✅ Acesso a todas as 380+ palestras</div>
+                        <div class="benefit">✅ Certificados automáticos</div>
+                        <div class="benefit">✅ Suporte prioritário</div>
+                        <div class="benefit">✅ Descontos em eventos</div>
+                        <div class="benefit">✅ Sorteios mensais de livros</div>
+                    </div>
+                    <a href="https://pay.hotmart.com/V94273047M?off=i1hvrpr2&checkoutMode=10" class="cta-btn cta-plan cta-popular" target="_blank">
+                        <i class="fas fa-fire"></i> Assinar agora
+                    </a>
+                    <p class="plan-guarantee">💳 Acesso imediato após pagamento</p>
+                </div>
+
+                <div class="price-card fade-item">
+                    <div class="badge-container">
+                        <div class="badge invisible">Placeholder</div>
+                    </div>
+                    <h4>Trimestral</h4>
+                    <div class="price-section">
+                        <div class="price">R$ 150</div>
+                        <div class="price-per-day">R$ 1,67/dia</div>
+                        <div class="savings">Economize R$ 9</div>
+                    </div>
+                    <div class="price-benefits">
+                        <div class="benefit">✅ Acesso a todas as 380+ palestras</div>
+                        <div class="benefit">✅ Certificados automáticos</div>
+                        <div class="benefit">✅ Suporte prioritário</div>
+                        <div class="benefit">✅ Descontos em eventos</div>
+                        <div class="benefit">✅ Sorteios mensais de livros</div>
+                    </div>
+                    <a href="https://pay.hotmart.com/V94273047M?off=whfa869v&checkoutMode=10" class="cta-btn cta-plan" target="_blank">
+                        <i class="fas fa-credit-card"></i> Assinar agora
+                    </a>
+                    <p class="plan-guarantee">💰 Economize com o plano trimestral</p>
+                </div>
+
+                <div class="price-card fade-item">
+                    <div class="badge-container">
+                        <div class="badge invisible">Placeholder</div>
+                    </div>
+                    <h4>Semestral</h4>
+                    <div class="price-section">
+                        <div class="price">R$ 285</div>
+                        <div class="price-per-day">R$ 1,58/dia</div>
+                        <div class="savings">Economize R$ 33</div>
+                    </div>
+                    <div class="price-benefits">
+                        <div class="benefit">✅ Acesso a todas as 380+ palestras</div>
+                        <div class="benefit">✅ Certificados automáticos</div>
+                        <div class="benefit">✅ Suporte prioritário</div>
+                        <div class="benefit">✅ Descontos em eventos</div>
+                        <div class="benefit">✅ Sorteios mensais de livros</div>
+                    </div>
+                    <a href="https://pay.hotmart.com/V94273047M?off=qh0m3cuy&checkoutMode=10" class="cta-btn cta-plan" target="_blank">
+                        <i class="fas fa-gift"></i> Assinar agora
+                    </a>
+                    <p class="plan-guarantee">📚 Mais economia no plano semestral</p>
+                </div>
+
+                <div class="price-card best-value fade-item">
+                    <div class="badge-container">
+                        <div class="badge best-value-badge">💰 Melhor custo-benefício</div>
+                    </div>
+                    <h4>Anual</h4>
+                    <div class="price-section">
+                        <div class="price">R$ 550</div>
+                        <div class="price-per-day">R$ 1,51/dia</div>
+                        <div class="savings">Economize R$ 86</div>
+                    </div>
+                    <div class="price-benefits">
+                        <div class="benefit">✅ Acesso a todas as 380+ palestras</div>
+                        <div class="benefit">✅ Certificados automáticos</div>
+                        <div class="benefit">✅ Suporte prioritário</div>
+                        <div class="benefit">✅ Descontos em eventos</div>
+                        <div class="benefit">✅ Sorteios mensais de livros</div>
+                    </div>
+                    <a href="https://pay.hotmart.com/V94273047M?off=cor1dwtx&checkoutMode=10" class="cta-btn cta-plan cta-best" target="_blank">
+                        <i class="fas fa-crown"></i> Máxima economia
+                    </a>
+                    <p class="plan-guarantee">👑 Maior desconto disponível</p>
+                </div>
+            </div>
+            
+            <div class="pricing-footer">
+                <div class="payment-options">
+                    <h4>💳 Formas de Pagamento Aceitas:</h4>
+                    <div class="payment-icons">
+                        <span>💳 Cartão de Crédito</span>
+                        <span>🏦 PIX</span>
+                        <span>📄 Boleto</span>
+                        <span>💸 PayPal</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Guarantee Section - Enhanced -->
+    <section class="guarantee-enhanced fade-item">
+        <div class="glass-section">
+            <div class="guarantee-content">
+                <div class="guarantee-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h2>Garantia de satisfação completa</h2>
+                <div class="guarantee-points">
+                    <div class="guarantee-point">
+                        <i class="fas fa-calendar-times"></i>
+                        <div>
+                            <h4>Cancele quando quiser</h4>
+                            <p>Sem multas, sem burocracia. Um clique e pronto.</p>
+                        </div>
+                    </div>
+                    <div class="guarantee-point">
+                        <i class="fas fa-mobile-alt"></i>
+                        <div>
+                            <h4>Acesso total imediato</h4>
+                            <p>Computador, tablet, celular - onde você estiver.</p>
+                        </div>
+                    </div>
+                    <div class="guarantee-point">
+                        <i class="fas fa-headset"></i>
+                        <div>
+                            <h4>Suporte dedicado</h4>
+                            <p>Time especializado pronto para te ajudar.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Authority/Creator Section -->
+    <section class="creator-authority fade-item">
+        <div class="glass-section">
+            <h2 class="section-title">Criado por William Cassemiro</h2>
+            <p class="section-subtitle">Ex-presidente da ABRATES e referência nacional em tradução</p>
+            
+            <div class="creator-info-enhanced">
+                <div class="creator-image">
+                    <img src="/images/william.png" alt="William Cassemiro">
+                </div>
+                <div class="creator-credentials">
+                    <div class="credential-item">
+                        <i class="fas fa-university"></i>
+                        <div>
+                            <h4>Formação sólida</h4>
+                            <p>Bacharel em Letras pela USP</p>
+                        </div>
+                    </div>
+                    <div class="credential-item">
+                        <i class="fas fa-medal"></i>
+                        <div>
+                            <h4>Experiência comprovada</h4>
+                            <p>Ex-diretor e ex-presidente da ABRATES (2014-2018)</p>
+                        </div>
+                    </div>
+                    <div class="credential-item">
+                        <i class="fas fa-globe"></i>
+                        <div>
+                            <h4>Reconhecimento internacional</h4>
+                            <p>Palestrante em eventos no Brasil e exterior</p>
+                        </div>
+                    </div>
+                    <div class="credential-item">
+                        <i class="fas fa-chart-line"></i>
+                        <div>
+                            <h4>Carreira de sucesso</h4>
+                            <p>Mais de 20 anos transformando carreiras</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section - Conversion Focused -->
+    <section class="faq-conversion fade-item" id="faq">
+        <div class="glass-section">
+            <h2 class="section-title">Perguntas frequentes</h2>
+            <p class="section-subtitle">Tire suas dúvidas antes de começar sua transformação</p>
+
+            <div class="faq-grid">
+                <div class="faq-column">
+                    <div class="faq-item fade-item" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <h4>Como funciona o acesso? É realmente imediato?</h4>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Sim, é imediato!</strong> Após confirmar o pagamento, você recebe login e senha na hora. Em menos de 2 minutos já está assistindo às palestras.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item fade-item" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <h4>Posso cancelar realmente a qualquer momento?</h4>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Absolutamente!</strong> Não há multa, burocracia ou período mínimo. Você cancela quando quiser através da plataforma ou entrando em contato conosco.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item fade-item" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <h4>Vale a pena para quem está começando na área?</h4>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Definitivamente!</strong> Temos palestras desde o nível iniciante até avançado. Muitos de nossos assinantes começaram do zero e hoje são profissionais estabelecidos no mercado.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item fade-item" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <h4>Os certificados são aceitos pelo mercado?</h4>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Sim!</strong> Nossos certificados são reconhecidos e você pode incluí-los em seu currículo e LinkedIn para comprovar sua educação continuada.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item fade-item" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <h4>Como vocês conseguem manter o preço tão baixo?</h4>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Modelo de assinatura!</strong> Ao invés de cobrar milhares por curso individual, oferecemos acesso completo por uma mensalidade acessível. Todos ganham.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item fade-item" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <h4>A plataforma funciona no celular?</h4>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Sim!</strong> Nossa plataforma é totalmente responsiva e funciona perfeitamente em dispositivos móveis, tablets e desktops.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-column">
+                    <div class="faq-item fade-item" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <h4>Quanto tempo leva para ver resultados?</h4>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Varia de pessoa para pessoa,</strong> mas muitos assinantes relatam melhorias em 30-60 dias. O conhecimento é imediatamente aplicável em seus projetos.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item fade-item" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <h4>Como obter os certificados?</h4>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Os certificados são gerados automaticamente</strong> após assistir uma palestra completa. Você pode baixá-los diretamente da plataforma em formato PDF.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item fade-item" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <h4>Posso baixar os glossários?</h4>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Sim!</strong> Na seção Glossários você encontra materiais especializados para download gratuito. Todos os arquivos estão disponíveis em formato PDF.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item fade-item" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <h4>Os pagamentos são seguros?</h4>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Sim!</strong> Utilizamos sistemas de pagamento criptografados e seguros. Todos os dados são protegidos conforme as melhores práticas de segurança.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item fade-item" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <h4>Esqueci minha senha, como recuperar?</h4>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Fácil!</strong> Na página de login, clique em "Esqueci minha senha" e siga as instruções enviadas para seu email cadastrado.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item fade-item" onclick="toggleFaq(this)">
+                        <div class="faq-question">
+                            <h4>Como atualizar meus dados pessoais?</h4>
+                            <i class="fas fa-chevron-down faq-icon"></i>
+                        </div>
+                        <div class="faq-answer">
+                            <p><strong>Simples!</strong> Acesse sua área de usuário para atualizar informações pessoais, alterar senha e gerenciar suas preferências.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="final-cta fade-item">
+        <div class="glass-section">
+            <h2 class="section-title">Não deixe sua carreira parada</h2>
+            <p class="final-message">Enquanto você está pensando, outros profissionais estão se capacitando e avançando no mercado.</p>
+            
+            <div class="urgency-stats">
+                <div class="stat-item">
+                    <div class="stat-number">+1.500</div>
+                    <div class="stat-label">Profissionais já transformaram suas carreiras</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">+380</div>
+                    <div class="stat-label">Palestras esperando por você</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">R$ 1,51</div>
+                    <div class="stat-label">Por dia no plano anual</div>
+                </div>
+            </div>
+            
+            <div class="final-cta-action">
+                <a href="#planos" class="cta-btn cta-final mega-btn">
+                    <i class="fas fa-rocket"></i> Transformar minha carreira agora
+                </a>
+                <p class="final-guarantee">⚡ Acesso em 2 minutos • 🛡️ Garantia total • ❌ Cancele quando quiser</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Login Options Section for Non-Logged Users -->
+    <?php if (!function_exists('isLoggedIn') || !isLoggedIn()): ?>
+    <section class="glass-section fade-item login-highlight">
+        <div class="login-content">
+            <h2 class="section-title">Já é assinante?</h2>
+            
+            <div class="login-actions">
+                <a href="/login.php" class="cta-btn login-btn">
+                    <i class="fa-solid fa-key"></i> Fazer login
+                </a>
+                <a href="/registro.php" class="cta-btn register-btn">
+                    <i class="fa-solid fa-user-plus"></i> Criar conta nova
+                </a>
+            </div>
+        </div>
+    </section>
+    <?php endif; ?>
+</main>
+
+<?php include __DIR__ . '/vision/includes/footer.php'; ?>
+
+<style>
+/* Enhanced Conversion-Focused Styles */
+:root {
+    --brand-purple: #8e44ad;
+    --brand-purple-dark: #5e3370;
+    --brand-purple-light: #a569bd;
+    --accent-gold: #f39c12;
+    --accent-green: #27ae60;
+    --accent-red: #e74c3c;
+    --text-primary: #ffffff;
+    --text-secondary: #f0f0f0;
+    --text-muted: #d4d4d4;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.15);
+}
+
+/* Enhanced Typography for Conversion */
+.hero-headline {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    text-align: center;
+    margin-bottom: 30px;
+    line-height: 1.2;
+    text-shadow: 0 4px 20px rgba(142, 68, 173, 0.6);
+}
+
+.hero-subheadline {
+    font-size: 1.4rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 40px;
+    line-height: 1.6;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.section-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 40px;
+    font-style: italic;
+}
+
+/* Hero Content Conversion */
+.hero-content-conversion {
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.social-proof-hero {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin: 40px auto;
+    max-width: 700px;
+}
+
+.proof-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.proof-item i {
+    color: var(--accent-gold);
+    font-size: 1.2rem;
+}
+
+.hero-cta-section {
+    margin-top: 50px;
+}
+
+.hero-guarantee {
+    margin-top: 15px;
+    font-size: 1.1rem;
+    color: var(--accent-green);
+    font-weight: 600;
+}
+
+/* Pulse Animation for CTA */
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Combined Value Proposition and Problem/Solution Layout */
+.value-problem-combined {
+    margin: 40px 0;
+}
+
+.value-problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.value-section {
+    background: linear-gradient(135deg, rgba(142, 68, 173, 0.1), rgba(255, 255, 255, 0.05));
+}
+
+.problem-solution-section {
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(39, 174, 96, 0.1));
+}
+
+/* Value Proposition Grid - Compact */
+.value-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    margin: 40px 0;
+}
+
+.value-card {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.value-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--brand-purple);
+    box-shadow: 0 20px 40px rgba(142, 68, 173, 0.3);
+}
+
+.value-icon {
+    margin-bottom: 25px;
+}
+
+.value-icon i {
+    font-size: 3.5rem;
+    color: var(--accent-gold);
+}
+
+.value-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+.value-card p {
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+/* Problem/Solution Section */
+.problem-solution-section {
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(142, 68, 173, 0.1));
+}
+
+.problem-section, .solution-section {
+    margin-bottom: 40px;
+}
+
+.problem-title {
+    color: var(--accent-red);
+    font-size: 2.2rem;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.solution-title {
+    color: var(--accent-green);
+    font-size: 2.2rem;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.problems-list, .solutions-list {
+    max-width: 600px;
+    margin: 0 auto;
+    font-size: 1.2rem;
+}
+
+.problem-item, .solution-item {
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.problem-item {
+    background: rgba(231, 76, 60, 0.2);
+    color: #ffcccb;
+}
+
+.solution-item {
+    background: rgba(39, 174, 96, 0.2);
+    color: #90ee90;
+}
+
+/* Expertise Grid */
+.expertise-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+    margin: 50px 0;
+}
+
+.expertise-card {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 30px;
+    border-radius: 18px;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.expertise-card:hover {
+    background: rgba(142, 68, 173, 0.15);
+    transform: translateY(-5px);
+    border-color: var(--brand-purple);
+}
+
+.expertise-card i {
+    font-size: 2.5rem;
+    color: var(--accent-gold);
+    margin-bottom: 20px;
+}
+
+.expertise-card h4 {
+    font-size: 1.3rem;
+    margin-bottom: 15px;
+    color: var(--text-primary);
+}
+
+.expertise-cta {
+    text-align: center;
+    margin-top: 40px;
+}
+
+/* Enhanced Testimonials */
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+    margin: 50px 0;
+}
+
+.testimonial-video {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.testimonial-video:hover {
+    transform: scale(1.02);
+    box-shadow: 0 15px 40px rgba(142, 68, 173, 0.3);
+}
+
+.video-wrapper {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+}
+
+.testimonial-info {
+    padding: 20px;
+    text-align: center;
+}
+
+.testimonial-info p {
+    font-size: 1.1rem;
+    color: var(--accent-gold);
+    font-weight: 600;
+}
+
+/* Conversion-Optimized Pricing */
+.pricing-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.pricing-subtitle {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.urgency-banner {
+    background: linear-gradient(135deg, var(--accent-red), #c0392b);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 25px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    animation: pulse 2s infinite;
+    margin-top: 20px;
+}
+
+.pricing-grid-conversion {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin: 50px 0;
+}
+
+.price-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 35px 25px;
+    text-align: center;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.price-card.popular {
+    border-color: var(--accent-red);
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.price-card.best-value {
+    border-color: var(--accent-green);
+    background: rgba(39, 174, 96, 0.1);
+}
+
+.badge-container {
+    height: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.badge {
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.popular-badge {
+    background: linear-gradient(135deg, var(--accent-red), #c0392b);
+    color: white;
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
+}
+
+.best-value-badge {
+    background: linear-gradient(135deg, var(--accent-green), #229954);
+    color: white;
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.5);
+}
+
+.badge.invisible {
+    visibility: hidden;
+}
+
+.price-card h4 {
+    font-size: 1.6rem;
+    color: var(--text-primary);
+    margin: 20px 0;
+    font-weight: 600;
+}
+
+.price-section {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.price {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    margin: 25px 0;
+    text-shadow: 0 2px 10px rgba(243, 156, 18, 0.5);
+}
+
+.price-per-day {
+    font-size: 1.1rem;
+    color: var(--accent-green);
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+.savings {
+    background: var(--accent-green);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-top: 10px;
+    display: inline-block;
+}
+
+.price-benefits {
+    margin: 25px 0;
+    text-align: left;
+}
+
+.benefit {
+    padding: 8px 0;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.cta-plan {
+    width: 100%;
+    font-size: 1.1rem;
+    padding: 16px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.cta-popular {
+    background: linear-gradient(135deg, var(--accent-red), #c0392b);
+    animation: pulse 2s infinite;
+}
+
+.cta-best {
+    background: linear-gradient(135deg, var(--accent-green), #229954);
+}
+
+.plan-guarantee {
+    font-size: 0.9rem;
+    color: var(--accent-green);
+    text-align: center;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+.price-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 50px rgba(142, 68, 173, 0.4);
+}
+
+.payment-options {
+    text-align: center;
+    margin-top: 40px;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+}
+
+.payment-icons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.payment-icons span {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+}
+
+/* Enhanced Guarantee */
+.guarantee-enhanced {
+    background: linear-gradient(135deg, rgba(39, 174, 96, 0.1), rgba(142, 68, 173, 0.1));
+}
+
+.guarantee-content {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.guarantee-icon i {
+    font-size: 5rem;
+    color: var(--accent-green);
+    margin-bottom: 30px;
+}
+
+.guarantee-points {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin-top: 40px;
+}
+
+.guarantee-point {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    text-align: left;
+}
+
+.guarantee-point i {
+    font-size: 2rem;
+    color: var(--accent-green);
+    margin-top: 5px;
+}
+
+.guarantee-point h4 {
+    margin-bottom: 10px;
+    color: var(--text-primary);
+}
+
+/* Creator Authority */
+.creator-info-enhanced {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 60px;
+    align-items: center;
+    margin: 50px 0;
+}
+
+.creator-image img {
+    width: 300px;
+    height: 300px;
+    border-radius: 25px;
+    border: 4px solid var(--accent-gold);
+    box-shadow: 0 20px 50px rgba(243, 156, 18, 0.4);
+    object-fit: cover;
+}
+
+.creator-credentials {
+    display: grid;
+    gap: 25px;
+}
+
+.credential-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 15px;
+}
+
+.credential-item i {
+    font-size: 2rem;
+    color: var(--accent-gold);
+    margin-top: 5px;
+}
+
+.credential-item h4 {
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+/* Final CTA */
+.final-cta {
+    background: linear-gradient(135deg, rgba(142, 68, 173, 0.2), rgba(243, 156, 18, 0.1));
+}
+
+.final-message {
+    font-size: 1.3rem;
+    text-align: center;
+    margin-bottom: 40px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.urgency-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+    margin: 40px 0;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.stat-item {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 20px;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--accent-gold);
+    margin-bottom: 10px;
+}
+
+.stat-label {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.final-cta-action {
+    text-align: center;
+    margin-top: 50px;
+}
+
+.mega-btn {
+    font-size: 1.4rem;
+    padding: 25px 50px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, var(--brand-purple), var(--accent-gold));
+    animation: pulse 3s infinite;
+}
+
+.final-guarantee {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    color: var(--accent-green);
+    font-weight: 600;
+}
+
+/* Enhanced CTA Buttons */
+.cta-btn {
+    display: inline-block;
+    padding: 18px 36px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 30px;
+    background: var(--brand-purple);
+    color: var(--text-primary);
+    text-decoration: none;
+    box-shadow: 0 8px 25px rgba(142, 68, 173, 0.6);
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.cta-primary {
+    background: linear-gradient(135deg, var(--brand-purple), var(--brand-purple-dark));
+    font-size: 1.3rem;
+    padding: 20px 40px;
+}
+
+.cta-secondary {
+    background: linear-gradient(135deg, var(--accent-gold), #e67e22);
+    color: var(--text-primary);
+}
+
+.cta-final {
+    background: linear-gradient(135deg, var(--brand-purple), var(--accent-gold));
+}
+
+.cta-btn:hover {
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: 0 12px 35px rgba(142, 68, 173, 0.8);
+}
+
+/* Enhanced FAQ - Two Column Layout */
+.faq-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.faq-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.faq-conversion .faq-item {
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.faq-conversion .faq-item:hover {
+    background: rgba(142, 68, 173, 0.15);
+    border-color: var(--brand-purple);
+    transform: translateX(5px);
+}
+
+.faq-question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px;
+}
+
+.faq-question h4 {
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.faq-icon {
+    color: var(--accent-gold);
+    transition: transform 0.3s ease;
+    font-size: 1.2rem;
+}
+
+.faq-item.active .faq-icon {
+    transform: rotate(180deg);
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.faq-item.active .faq-answer {
+    max-height: 200px;
+}
+
+.faq-answer p {
+    padding: 0 30px 30px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+/* Login Section */
+.login-highlight {
+    background: linear-gradient(135deg, rgba(142, 68, 173, 0.15), rgba(255, 255, 255, 0.05));
+    border: 2px solid rgba(142, 68, 173, 0.3);
+}
+
+.login-content {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.login-actions {
+    display: flex;
+    gap: 25px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.login-btn {
+    background: linear-gradient(135deg, var(--brand-purple), var(--brand-purple-dark));
+    font-size: 1.2rem;
+    padding: 18px 36px;
+    font-weight: 600;
+}
+
+.register-btn {
+    background: linear-gradient(135deg, var(--accent-green), #229954);
+    font-size: 1.2rem;
+    padding: 18px 36px;
+    font-weight: 600;
+}
+
+.main-logo {
+    max-width: 280px;
+    height: auto;
+    filter: drop-shadow(0 8px 25px rgba(142, 68, 173, 0.6));
+    animation: pulse 3s infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .hero-headline {
+        font-size: 2.8rem;
+    }
+    
+    .social-proof-hero {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .value-problem-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    
+    .value-grid-compact {
+        grid-template-columns: 1fr;
+    }
+    
+    .creator-info-enhanced {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 40px;
+    }
+    
+    .testimonials-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .expertise-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .guarantee-points {
+        grid-template-columns: 1fr;
+    }
+    
+    .faq-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-headline {
+        font-size: 2.2rem;
+    }
+    
+    .expertise-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .pricing-grid-conversion {
+        grid-template-columns: 1fr;
+    }
+    
+    .urgency-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .payment-icons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .glass-section {
+        padding: 40px 20px;
+        border-radius: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-headline {
+        font-size: 1.8rem;
+    }
+    
+    .mega-btn {
+        font-size: 1.1rem;
+        padding: 18px 30px;
+    }
+    
+    .glass-section {
+        padding: 30px 16px;
+        margin: 20px 0;
+    }
+    
+    .login-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .login-actions .cta-btn {
+        width: 100%;
+        max-width: 280px;
+    }
+}
+</style>
+
+<script>
+function toggleFaq(element) {
+    const isActive = element.classList.contains('active');
+
+    // Close all FAQ items
+    document.querySelectorAll('.faq-item').forEach(item => {
+        item.classList.remove('active');
+    });
+
+    // If the clicked item wasn't active, open it
+    if (!isActive) {
+        element.classList.add('active');
+    }
+}
+
+// Fade in animation on scroll
+function handleScrollAnimation() {
+    const elements = document.querySelectorAll('.fade-item');
+
+    elements.forEach(element => {
+        const elementTop = element.getBoundingClientRect().top;
+        const elementVisible = 150;
+
+        if (elementTop < window.innerHeight - elementVisible) {
+            element.classList.add('visible');
+        }
+    });
+}
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+
+// Initialize animations
+document.addEventListener('DOMContentLoaded', function() {
+    handleScrollAnimation();
+    window.addEventListener('scroll', handleScrollAnimation);
+    
+    // Add loading animation for pricing cards
+    const priceCards = document.querySelectorAll('.price-card');
+    priceCards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.animation = 'fadeInUp 0.6s ease forwards';
+        }, index * 200);
+    });
+});
+
+// Add urgency timer (optional)
+function addUrgencyTimer() {
+    // Could add a countdown timer for special offers
+    // Implementation would depend on specific campaign needs
+}
+</script>
+
+<?php
+// URL da Landing Page da Hotmart como fallback
+$hotmart_lp_url = 'https://hotm.art/t101';
+?>

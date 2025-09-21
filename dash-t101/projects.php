@@ -1,0 +1,886 @@
+<?php
+session_start();
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/dash_database.php';
+
+// Verificar se o usuário está logado
+if (!isLoggedIn()) {
+    header('Location: /login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+    exit;
+}
+
+$page_title = 'Projetos - Dash-T101';
+$user_id = $_SESSION['user_id'];
+$message = '';
+$error = '';
+
+// Processar ações
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['action'])) {
+    switch ($_POST['action']) {
+    case 'add_project':
+    try {
+    $word_count = intval($_POST['word_count'] ?? 0);
+    // Removido character_count
+    $rate_per_word = floatval($_POST['rate_per_word'] ?? 0);
+    // Removido rate_per_character
+    $daily_word_target = intval($_POST['daily_target'] ?? 0);
+
+    $negotiated_amount = floatval(str_replace(',', '.', $_POST['negotiated_value'] ?? '0'));
+    // A função calculateProjectTotal deve ser ajustada para não usar character_count se for removido globalmente
+    $calculated_amount = calculateProjectTotal($word_count, 0, $rate_per_word, 0); // Passando 0 para character_count e rate_per_character
+    $total_amount = ($negotiated_amount > 0) ? $negotiated_amount : $calculated_amount;
+
+    // Removido character_count e rate_per_character do INSERT
+    $stmt = $pdo->prepare("INSERT INTO dash_projects (user_id, client_id, title, po_number, description, source_language, target_language, service_type, word_count, rate_per_word, total_amount, currency, status, priority, start_date, deadline, notes, daily_word_target) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $result = $stmt->execute([
+    $user_id,
+    $_POST['client_id'],
+    $_POST['project_name'],
+    $_POST['po_number'] ?? null,
+    $_POST['description'] ?? '',
+    $_POST['source_lang'],
+    $_POST['target_lang'],
+    $_POST['service_type'],
+    $word_count,
+    $rate_per_word,
+    $total_amount,
+    $_POST['currency'],
+    $_POST['status'],
+    $_POST['priority'],
+    $_POST['start_date'] ?: null,
+    $_POST['due_date'] ?: null,
+    $_POST['notes'] ?? '',
+    $daily_word_target
+    ]);
+
+    if ($result) {
+    $message = 'Projeto adicionado com sucesso!';
+    } else {
+    $error = 'Erro ao adicionar projeto.';
+    }
+    } catch (PDOException $e) {
+    $error = 'Erro: ' . $e->getMessage();
+    }
+    break;
+
+    case 'edit_project':
+    try {
+    $word_count = intval($_POST['word_count'] ?? 0);
+    // Removido character_count
+    $rate_per_word = floatval($_POST['rate_per_word'] ?? 0);
+    // Removido rate_per_character
+    $daily_word_target = intval($_POST['daily_target'] ?? 0);
+
+    $negotiated_amount = floatval(str_replace(',', '.', $_POST['negotiated_value'] ?? '0'));
+    // A função calculateProjectTotal deve ser ajustada para não usar character_count se for removido globalmente
+    $calculated_amount = calculateProjectTotal($word_count, 0, $rate_per_word, 0); // Passando 0 para character_count e rate_per_character
+    $total_amount = ($negotiated_amount > 0) ? $negotiated_amount : $calculated_amount;
+
+    // Removido character_count e rate_per_character do UPDATE
+    $stmt = $pdo->prepare("UPDATE dash_projects SET client_id = ?, title = ?, po_number = ?, description = ?, source_language = ?, target_language = ?, service_type = ?, word_count = ?, rate_per_word = ?, total_amount = ?, currency = ?, status = ?, priority = ?, start_date = ?, deadline = ?, notes = ?, daily_word_target = ? WHERE id = ? AND user_id = ?");
+    $result = $stmt->execute([
+    $_POST['client_id'],
+    $_POST['project_name'],
+    $_POST['po_number'] ?? null,
+    $_POST['description'] ?? '',
+    $_POST['source_lang'],
+    $_POST['target_lang'],
+    $_POST['service_type'],
+    $word_count,
+    $rate_per_word,
+    $total_amount,
+    $_POST['currency'],
+    $_POST['status'],
+    $_POST['priority'],
+    $_POST['start_date'] ?: null,
+    $_POST['due_date'] ?: null,
+    $_POST['notes'] ?? '',
+    $daily_word_target, // Adicionado o novo campo
+    $_POST['project_id'],
+    $user_id
+    ]);
+
+    if ($result) {
+    $message = 'Projeto atualizado com sucesso!';
+    } else {
+    $error = 'Erro ao atualizar projeto.';
+    }
+    } catch (PDOException $e) {
+    $error = 'Erro: ' . $e->getMessage();
+    }
+    break;
+
+    case 'delete_project':
+    try {
+    $stmt = $pdo->prepare("DELETE FROM dash_projects WHERE id = ? AND user_id = ?");
+    $result = $stmt->execute([$_POST['project_id'], $user_id]);
+
+    if ($result) {
+    $message = 'Projeto excluído com sucesso!';
+    } else {
+    $error = 'Erro ao excluir projeto.';
+    }
+    } catch (PDOException $e) {
+    $error = 'Erro: ' . $e->getMessage();
+    }
+    break;
+
+    case 'complete_project':
+    try {
+    $project_id = $_POST['project_id'];
+    $stmt = $pdo->prepare("UPDATE dash_projects SET status = 'completed', completed_date = CURDATE() WHERE id = ? AND user_id = ?");
+    $result = $stmt->execute([$project_id, $user_id]);
+
+    if ($result) {
+    $message = 'Projeto marcado como concluído!';
+    } else {
+    $error = 'Erro ao marcar projeto como concluído.';
+    }
+    } catch (PDOException $e) {
+    $error = 'Erro: ' . $e->getMessage();
+    }
+    break;
+
+    case 'generate_invoice':
+    try {
+    $project_id = $_POST['project_id'];
+    $invoice_number = generateInvoiceFromProject($user_id, $project_id);
+
+    if ($invoice_number) {
+    $message = 'Fatura gerada com sucesso! Número: ' . $invoice_number;
+    } else {
+    $error = 'Erro ao gerar fatura a partir do projeto. Verifique o log de erros para mais detalhes.';
+    }
+    } catch (PDOException $e) {
+    $error = 'Erro: ' . $e->getMessage();
+    }
+    break;
+    }
+    }
+}
+
+// Obter lista de clientes para o dropdown (incluindo a moeda padrão)
+$stmt = $pdo->prepare("SELECT id, company AS company_name, default_currency FROM dash_clients WHERE user_id = ? ORDER BY company ASC");
+$stmt->execute([$user_id]);
+$clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Obter lista de projetos
+$search = $_GET['search'] ?? '';
+$status_filter = $_GET['status'] ?? '';
+$where_clause = "WHERE p.user_id = ?";
+$params = [$user_id];
+
+if ($search) {
+    $where_clause .= " AND (p.title LIKE ? OR c.company LIKE ?)";
+    $search_param = "%$search%";
+    $params[] = $search_param;
+    $params[] = $search_param;
+}
+
+if ($status_filter) {
+    $where_clause .= " AND p.status = ?";
+    $params[] = $status_filter;
+}
+
+// Selecionando po_number e daily_word_target
+$stmt = $pdo->prepare("SELECT p.*, p.title AS project_name, p.description AS project_description, p.po_number, p.daily_word_target, c.company AS company_name, c.name AS contact_name FROM dash_projects p LEFT JOIN dash_clients c ON p.client_id = c.id $where_clause ORDER BY p.created_at DESC");
+$stmt->execute($params);
+$projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Obter projeto para edição se solicitado
+$edit_project = null;
+if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
+    // Selecionando po_number e daily_word_target para edição
+    $stmt = $pdo->prepare("SELECT p.*, p.title AS project_name, p.description AS project_description, p.po_number, p.daily_word_target, c.company AS company_name, c.name AS contact_name FROM dash_projects p LEFT JOIN dash_clients c ON p.client_id = c.id WHERE p.id = ? AND p.user_id = ?");
+    $stmt->execute([$_GET['edit'], $user_id]);
+    $edit_project = $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+// --- Lógica para a Linha do Tempo ---
+$display_range_days = 30; // Período fixo de 30 dias
+$today_display_offset_days = 10; // "HOJE" no 10º dia da exibição
+
+// Garantir que a data atual seja baseada no fuso horário correto (se aplicável ao ambiente do servidor)
+date_default_timezone_set('America/Sao_Paulo'); // Defina para o fuso horário de seu servidor/usuário, se diferente do padrão
+$today_ts = strtotime(date('Y-m-d')); // Data atual à meia-noite (00:00:00)
+
+// Calcular a data de início da exibição (10 dias antes de hoje)
+$min_display_date = strtotime(date('Y-m-d', strtotime("-$today_display_offset_days days", $today_ts)));
+// Calcular a data de fim da exibição (20 dias depois de hoje, totalizando 30 dias de range)
+$max_display_date = strtotime(date('Y-m-d', strtotime("+" . ($display_range_days - $today_display_offset_days - 1) . " days", $today_ts)));
+
+// A posição percentual do "HOJE" na linha do tempo geral de 30 dias (fixa)
+$today_pos_on_global_line_percent = ($today_display_offset_days / $display_range_days) * 100;
+
+$page_title = "Adicionar novo projeto - Translators101";
+$page_description = "Crie um novo projeto de tradução e atribua detalhes.";
+include __DIR__ . '/../vision/includes/head.php';
+include __DIR__ . '/../vision/includes/header.php';
+include __DIR__ . '/../vision/includes/sidebar.php';
+?>
+
+<div class="main-content">
+    <?php if ($message): ?>
+    <div class="alert-success">
+    <i class="fas fa-check-circle"></i>
+    <?php echo htmlspecialchars($message); ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($error): ?>
+    <div class="alert-error">
+    <i class="fas fa-exclamation-triangle"></i>
+    <?php echo htmlspecialchars($error); ?>
+    </div>
+    <?php endif; ?>
+
+  <div class="video-card">
+    <h2><i class="fas fa-plus-circle"></i> Adicionar novo projeto</h2>
+
+    <form method="POST" class="vision-form">
+      <input type="hidden" name="action" value="<?php echo $edit_project ? 'edit_project' : 'add_project'; ?>">
+      <?php if ($edit_project): ?>
+      <input type="hidden" name="project_id" value="<?php echo $edit_project['id']; ?>">
+      <?php endif; ?>
+
+      <!-- Primeira linha: Nome do Projeto -->
+      <div class="form-grid">
+        <div class="form-group-wide">
+          <label for="project_name"><i class="fas fa-folder-plus"></i> Nome do projeto *</label>
+          <input type="text" id="project_name" name="project_name" required value="<?php echo htmlspecialchars($edit_project['project_name'] ?? ''); ?>">
+        </div>
+      </div>
+
+      <!-- Segunda linha: Cliente / Idiomas / Tipo de serviço / PO -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="client_id"><i class="fas fa-user"></i> Cliente *</label>
+          <select id="client_id" name="client_id" required>
+            <option value="">Selecione um cliente</option>
+            <?php foreach ($clients as $client): ?>
+            <option value="<?php echo $client['id']; ?>"
+            data-currency="<?php echo htmlspecialchars($client['default_currency']); ?>"
+            <?php echo ($edit_project && $edit_project['client_id'] == $client['id']) ? 'selected' : ''; ?>>
+            <?php echo htmlspecialchars($client['company_name']); ?>
+            </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="source_lang"><i class="fas fa-language"></i> Idioma de origem *</label>
+          <select id="source_lang" name="source_lang" required>
+            <option value="">Selecione</option>
+            <?php 
+            $languages = [
+                'pt' => 'Português',
+                'en' => 'Inglês',
+                'es' => 'Espanhol',
+                'fr' => 'Francês',
+                'de' => 'Alemão',
+                'it' => 'Italiano',
+                'ja' => 'Japonês',
+                'ko' => 'Coreano',
+                'zh' => 'Chinês',
+                'ru' => 'Russo'
+            ];
+            foreach ($languages as $code => $name): ?>
+            <option value="<?php echo $code; ?>" <?php echo ($edit_project && $edit_project['source_language'] == $code) ? 'selected' : ''; ?>>
+            <?php echo $name; ?>
+            </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="target_lang"><i class="fas fa-language"></i> Idioma de destino *</label>
+          <select id="target_lang" name="target_lang" required>
+            <option value="">Selecione</option>
+            <?php foreach ($languages as $code => $name): ?>
+            <option value="<?php echo $code; ?>" <?php echo ($edit_project && $edit_project['target_language'] == $code) ? 'selected' : ''; ?>>
+            <?php echo $name; ?>
+            </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="service_type"><i class="fas fa-cogs"></i> Tipo de serviço *</label>
+          <select id="service_type" name="service_type" required>
+            <option value="traducao" <?php echo ($edit_project && $edit_project['service_type'] == 'traducao') ? 'selected' : ''; ?>>Tradução</option>
+            <option value="revisao" <?php echo ($edit_project && $edit_project['service_type'] == 'revisao') ? 'selected' : ''; ?>>Revisão</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="po_number"><i class="fas fa-hashtag"></i> Número da PO (Purchase Order)</label>
+          <input type="text" id="po_number" name="po_number" value="<?php echo htmlspecialchars($edit_project['po_number'] ?? ''); ?>">
+        </div>
+      </div>
+
+      <!-- Terceira linha: Contagem / Taxa / Total / Valor / Meta -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="word_count"><i class="fas fa-sort-numeric-up"></i> Contagem de palavras</label>
+          <input type="number" id="word_count" name="word_count" value="<?php echo $edit_project['word_count'] ?? ''; ?>" oninput="calculateTotal()">
+        </div>
+        <div class="form-group">
+          <label for="rate_per_word"><i class="fas fa-dollar-sign"></i> Valor por palavra</label>
+          <input type="number" id="rate_per_word" name="rate_per_word" step="0.0001" value="<?php echo $edit_project['rate_per_word'] ?? ''; ?>" oninput="calculateTotal()">
+        </div>
+        <div class="form-group">
+          <label for="currency"><i class="fas fa-money-bill-wave"></i> Moeda</label>
+          <select id="currency" name="currency">
+            <option value="BRL" <?php echo ($edit_project && $edit_project['currency'] == 'BRL') ? 'selected' : ''; ?>>BRL</option>
+            <option value="USD" <?php echo ($edit_project && $edit_project['currency'] == 'USD') ? 'selected' : ''; ?>>USD</option>
+            <option value="EUR" <?php echo ($edit_project && $edit_project['currency'] == 'EUR') ? 'selected' : ''; ?>>EUR</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-calculator"></i> Total calculado</label>
+          <input type="text" id="total_calculated" readonly value="R$ 0,00">
+        </div>
+        <div class="form-group">
+          <label for="negotiated_value"><i class="fas fa-hand-holding-usd"></i> Valor negociado</label>
+          <input type="number" id="negotiated_value" name="negotiated_value" step="0.01" value="<?php echo $edit_project['total_amount'] ?? ''; ?>">
+        </div>
+        <div class="form-group">
+          <label for="daily_target"><i class="fas fa-chart-line"></i> Meta de palavras/dia (opcional)</label>
+          <input type="number" id="daily_target" name="daily_target" value="<?php echo $edit_project['daily_word_target'] ?? ''; ?>">
+        </div>
+      </div>
+
+      <!-- Quarta linha: Status / Prioridade / Datas -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="status"><i class="fas fa-tasks"></i> Status</label>
+          <select id="status" name="status">
+            <option value="pendente" <?php echo ($edit_project && $edit_project['status'] == 'pending') ? 'selected' : ''; ?>>Pendente</option>
+            <option value="em_andamento" <?php echo ($edit_project && $edit_project['status'] == 'in_progress') ? 'selected' : ''; ?>>Em andamento</option>
+            <option value="concluido" <?php echo ($edit_project && $edit_project['status'] == 'completed') ? 'selected' : ''; ?>>Concluído</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="priority"><i class="fas fa-flag"></i> Prioridade</label>
+          <select id="priority" name="priority">
+            <option value="baixa" <?php echo ($edit_project && $edit_project['priority'] == 'low') ? 'selected' : ''; ?>>Baixa</option>
+            <option value="media" <?php echo ($edit_project && $edit_project['priority'] == 'medium') ? 'selected' : ''; ?>>Média</option>
+            <option value="alta" <?php echo ($edit_project && $edit_project['priority'] == 'high') ? 'selected' : ''; ?>>Alta</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="start_date"><i class="fas fa-calendar"></i> Data de início</label>
+          <input type="date" id="start_date" name="start_date" value="<?php echo $edit_project['start_date'] ?? ''; ?>">
+        </div>
+        <div class="form-group">
+          <label for="due_date"><i class="fas fa-calendar-alt"></i> Prazo de entrega</label>
+          <input type="date" id="due_date" name="due_date" value="<?php echo $edit_project['deadline'] ?? ''; ?>">
+        </div>
+      </div>
+
+      <!-- Quinta linha: Descrição -->
+      <div class="form-grid">
+        <div class="form-group-wide">
+          <label for="description"><i class="fas fa-align-left"></i> Descrição do projeto</label>
+          <textarea id="description" name="description" rows="4"><?php echo htmlspecialchars($edit_project['project_description'] ?? ''); ?></textarea>
+        </div>
+      </div>
+
+      <!-- Botão -->
+      <div class="form-actions">
+        <button type="submit" class="cta-btn">
+          <i class="fas fa-save"></i> <?php echo $edit_project ? 'Atualizar projeto' : 'Salvar projeto'; ?>
+        </button>
+        <?php if ($edit_project): ?>
+        <a href="projects.php" class="page-btn">
+        <i class="fas fa-times"></i> Cancelar
+        </a>
+        <?php endif; ?>
+      </div>
+
+    </form>
+  </div>
+
+    <div class="video-card">
+    <h2><i class="fas fa-chart-line"></i> Linha do tempo dos projetos</h2>
+    <div class="timeline-container">
+    <div class="timeline-header">
+    <div class="timeline-label">
+    <span class="timeline-title">Projetos</span>
+    </div>
+    <div class="timeline-bar">
+    <?php
+    $start_date_label = date('d/m/Y', $min_display_date);
+    $end_date_label = date('d/m/Y', $max_display_date);
+    $today_label = date('d/m/Y', $today_ts);
+    ?>
+    <span class="timeline-date timeline-date-start">
+    <?php echo $start_date_label; ?>
+    </span>
+
+    <span class="timeline-date timeline-date-end">
+    <?php echo $end_date_label; ?>
+    </span>
+
+    <div class="timeline-today" style="left: <?php echo $today_pos_on_global_line_percent; ?>%;">
+    <span class="timeline-today-label">HOJE (<?php echo $today_label; ?>)</span>
+    </div>
+    </div>
+    </div>
+    
+    <?php if (empty($projects)): ?>
+    <div class="alert-warning">
+    <i class="fas fa-info-circle"></i>
+    Nenhum projeto para exibir na linha do tempo.
+    </div>
+    <?php else: ?>
+    <?php
+    // Função para interpolar cor entre verde e vermelho
+    function interpolateColor($ratio) {
+    $r = (int)(34 + ($ratio * (239 - 34))); // 34 (verde) -> 239 (vermelho)
+    $g = (int)(197 - ($ratio * (197 - 55))); // 197 (verde) -> 55 (vermelho)
+    $b = (int)(94 - ($ratio * 94)); // 94 (verde) -> 0 (vermelho)
+    return "rgb($r,$g,$b)";
+    }
+
+    foreach ($projects as $project):
+    $start_ts = $project['start_date'] ? strtotime($project['start_date']) : null;
+    $deadline_ts = $project['deadline'] ? strtotime($project['deadline']) : null;
+
+    // Somente exibe projetos que têm data de início e prazo definidos e que se sobrepõem ao período de exibição
+    if ($start_ts === null || $deadline_ts === null || $deadline_ts < $min_display_date || $start_ts > $max_display_date) {
+    continue;
+    }
+
+    // Calcula o início e o fim visíveis do projeto dentro do range de 20 dias
+    $visible_start_ts = max($start_ts, $min_display_date);
+    $visible_end_ts = min($deadline_ts, $max_display_date);
+
+    // Calcular offsets em dias relativos ao período de exibição (min_display_date a max_display_date)
+    $offset_start_project_days = ($visible_start_ts - $min_display_date) / (60 * 60 * 24);
+    $offset_end_project_days = ($visible_end_ts - $min_display_date) / (60 * 60 * 24);
+
+    // Posição percentual de início e fim do projeto dentro da barra de 100% (20 dias)
+    $project_display_start_percent = ($offset_start_project_days / $display_range_days) * 100;
+    $project_display_end_percent = ($offset_end_project_days / $display_range_days) * 100;
+
+    // Posição do "HOJE" na barra (fixa no 5º dia, mas relativa ao período total de 20 dias)
+    $today_pos_percent_on_bar = ($today_display_offset_days / $display_range_days) * 100;
+
+    // Calcular o progresso real do projeto para o degradê
+    $progress_ratio = 0;
+    if ($deadline_ts > $start_ts) {
+    $progress_ratio = ($today_ts - $start_ts) / ($deadline_ts - $start_ts);
+    $progress_ratio = max(0, min(1, $progress_ratio));
+    }
+    
+    $color_gradient_css = '';
+    $color_width = 0;
+    $gray_width = 0;
+
+    if ($today_ts >= $deadline_ts) {
+    // Se o projeto já passou da data limite, a barra é toda colorida (verde ao vermelho total)
+    $color_width = $project_display_end_percent - $project_display_start_percent;
+    $gray_width = 0;
+    $color_gradient_css = "linear-gradient(to right, #22c55e, " . interpolateColor(1) . ")";
+    } elseif ($today_ts < $start_ts) {
+    // Se o projeto ainda não começou, a barra é toda cinza
+    $color_width = 0;
+    $gray_width = $project_display_end_percent - $project_display_start_percent;
+    } else {
+    // Se o projeto está em andamento, o degradê vai até a data de hoje, e o restante é cinza
+    // Calcula a cor no ponto "hoje"
+    $current_progress_ratio_for_color = ($today_ts - $start_ts) / ($deadline_ts - $start_ts);
+    $current_progress_ratio_for_color = max(0, min(1, $current_progress_ratio_for_color));
+    $color_to_today = interpolateColor($current_progress_ratio_for_color);
+
+    $color_gradient_css = "linear-gradient(to right, #22c55e, $color_to_today)";
+    
+    // Largura da parte colorida: do início visível até a posição do "HOJE" (limitado ao fim visível do projeto)
+    $color_segment_end_percent = min($today_pos_percent_on_bar, $project_display_end_percent);
+    $color_width = max(0, $color_segment_end_percent - $project_display_start_percent);
+
+    // Largura da parte cinza: da posição do "HOJE" (ou início visível, se HOJE for antes) até o fim visível
+    $gray_segment_start_percent = max($today_pos_percent_on_bar, $project_display_start_percent);
+    $gray_width = max(0, $project_display_end_percent - $gray_segment_start_percent);
+
+    // Ajuste se a cor e o cinza se sobrepõem na borda do projeto
+    if ($project_display_start_percent + $color_width > $project_display_end_percent) {
+    $color_width = $project_display_end_percent - $project_display_start_percent;
+    $gray_width = 0;
+    } else if ($project_display_start_percent + $color_width + $gray_width > $project_display_end_percent + 0.1) { // Pequeno offset para evitar problemas de float
+    $gray_width = $project_display_end_percent - ($project_display_start_percent + $color_width);
+    }
+    }
+
+
+    // Formatar datas para exibição
+    $display_deadline_date_label = date('d/m', $deadline_ts);
+    
+    // Calcular a posição da data final dentro da barra do projeto
+    $label_pos_on_global_line = (($deadline_ts - $min_display_date) / (60 * 60 * 24 * $display_range_days)) * 100;
+    $label_transform_x = '-50%'; // Centraliza o texto na posição
+
+    // Estimativa de largura do texto "DD/MM" (aprox. 30px em uma tela grande, o que em 75% da largura da tela total, ou ~1000px, seria uns 3%)
+    $estimated_label_width_percent = (strlen($display_deadline_date_label) * 0.7); // Ajuste este valor conforme necessário
+
+    // Regra 1: Se o deadline estiver após o final da linha do tempo de 20 dias, fixe o label na extrema direita.
+    if ($deadline_ts > $max_display_date) {
+    $label_left_pos = 100;
+    $label_transform_x = '-100%'; // Alinha o final do texto à direita da barra
+    }
+    // Regra 2: Se a data final do projeto está dentro do período visível do projeto
+    else {
+    // Posiciona o label na porcentagem correspondente ao deadline dentro dos 20 dias
+    $label_left_pos = (($deadline_ts - $min_display_date) / (60 * 60 * 24)) / ($display_range_days / 100);
+    
+    // Garante que o label não saia para a direita da *barra visível do projeto*
+    // Verifica se a parte direita do label (metade da largura do label) excederia o fim da barra visível do projeto
+    if (($label_left_pos + ($estimated_label_width_percent / 2)) > $project_display_end_percent) { 
+    $label_left_pos = $project_display_end_percent - ($estimated_label_width_percent / 2) - 0.5; // move o centro do label para dentro
+    $label_transform_x = '-50%'; 
+    }
+    // Garante que o label não saia para a esquerda da *barra visível do projeto*
+    // Verifica se a parte esquerda do label (metade da largura do label) excederia o início da barra visível do projeto
+    else if (($label_left_pos - ($estimated_label_width_percent / 2)) < $project_display_start_percent) {
+    $label_left_pos = $project_display_start_percent + ($estimated_label_width_percent / 2) + 0.5; // move o centro do label para dentro
+    $label_transform_x = '-50%';
+    }
+    else {
+    $label_transform_x = '-50%'; // Centraliza normalmente
+    }
+    }
+    
+    // Garante que o label_left_pos final esteja entre 0 e 100 (dentro da linha do tempo global)
+    $label_left_pos = max(0, min(100, $label_left_pos));
+
+    ?>
+    <div class="timeline-project">
+    <div class="timeline-project-info">
+    <span class="project-name"><?php echo htmlspecialchars($project['project_name']); ?></span>
+    <span class="project-client"> - <?php echo htmlspecialchars($project['company_name']); ?></span>
+    </div>
+    <div class="timeline-project-bar">
+    <?php if ($color_width > 0): ?>
+    <div class="timeline-progress timeline-progress-color"
+    style="left: <?php echo $project_display_start_percent; ?>%;
+    width: <?php echo $color_width; ?>%;
+    background-image: <?php echo $color_gradient_css; ?>;">
+    </div>
+    <?php endif; ?>
+    <?php if ($gray_width > 0): ?>
+    <div class="timeline-progress timeline-progress-gray"
+    style="left: <?php echo $project_display_start_percent + $color_width; ?>%;
+    width: <?php echo $gray_width; ?>%;">
+    </div>
+    <?php endif; ?>
+
+    <?php if ($today_pos_percent_on_bar >= $project_display_start_percent && $today_pos_percent_on_bar <= $project_display_end_percent): ?>
+    <div class="timeline-today-marker"
+    style="left: <?php echo $today_pos_percent_on_bar; ?>%;">
+    </div>
+    <?php endif; ?>
+
+    <span class="timeline-deadline-label"
+    style="left: <?php echo $label_left_pos; ?>%; transform: translate(<?php echo $label_transform_x; ?>, -50%);">
+    <?php echo $display_deadline_date_label; ?>
+    </span>
+    </div>
+    </div>
+    <?php endforeach; ?>
+    <?php endif; ?>
+    </div>
+    </div>
+
+    <div class="video-card">
+    <h2><i class="fas fa-chart-bar"></i> Estimativa de produtividade</h2>
+
+    <?php
+    $pending_projects_for_estimation = array_filter($projects, function($p) use ($today_ts) {
+    // Verifica se o status não é "completed" nem "cancelled"
+    $is_active_status = ($p['status'] !== 'completed' && $p['status'] !== 'cancelled');
+    
+    // Verifica se o prazo de entrega não é nulo e é maior ou igual à data de hoje
+    $has_future_deadline = false;
+    if ($p['deadline']) {
+    $deadline_ts_project = strtotime($p['deadline']);
+    // Use >= para incluir o dia do deadline como um dia útil
+    $has_future_deadline = ($deadline_ts_project >= $today_ts);
+    }
+
+    // Verifica se a contagem de palavras é maior que zero
+    $has_word_count = ($p['word_count'] > 0);
+
+    return $is_active_status && $has_future_deadline && $has_word_count;
+    });
+
+    if (empty($pending_projects_for_estimation)): ?>
+    <div class="alert-warning">
+    <i class="fas fa-info-circle"></i>
+    Nenhum projeto pendente com prazo e contagem de palavras para estimativa de produtividade.
+    </div>
+    <?php else: ?>
+    <div class="table-responsive">
+    <table class="data-table">
+    <thead>
+    <tr>
+    <th><i class="fas fa-project-diagram"></i> Projeto</th>
+    <th><i class="fas fa-calendar-check"></i> Prazo</th>
+    <th><i class="fas fa-sort-numeric-up"></i> Contagem de palavras</th>
+    <th><i class="fas fa-clock"></i> Dias restantes</th>
+    <th><i class="fas fa-target"></i> Meta diária (do projeto)</th>
+    <th><i class="fas fa-chart-line"></i> Sugestão diária para entregar no prazo</th>
+    </tr>
+    </thead>
+    <tbody>
+    <?php foreach ($pending_projects_for_estimation as $project):
+    $deadline_ts = strtotime($project['deadline']);
+    // Calcula dias restantes, incluindo o dia de hoje e o dia do deadline
+    $days_remaining_calc = ($deadline_ts - $today_ts) / (60 * 60 * 24);
+    $days_remaining = max(1, floor($days_remaining_calc) + 1); // Garante no mínimo 1 dia, adiciona o dia do deadline
+
+    $words_to_translate = $project['word_count'];
+    
+    $suggested_daily_words = ($days_remaining > 0) ? ceil($words_to_translate / $days_remaining) : $words_to_translate;
+    ?>
+    <tr>
+    <td><span class="text-primary"><?php echo htmlspecialchars($project['project_name']); ?></span></td>
+    <td><?php echo date('d/m/Y', $deadline_ts); ?></td>
+    <td><?php echo number_format($words_to_translate, 0, ',', '.'); ?></td>
+    <td><?php echo $days_remaining; ?></td>
+    <td><?php echo $project['daily_word_target'] > 0 ? number_format($project['daily_word_target'], 0, ',', '.') : '-'; ?></td>
+    <td>
+    <?php
+    $daily_target_set = $project['daily_word_target'];
+    if ($daily_target_set > 0) {
+    if ($daily_target_set < $suggested_daily_words) {
+    echo '<span class="text-warning">' . number_format($suggested_daily_words, 0, ',', '.') . ' (Acima da meta!)</span>';
+    } elseif ($daily_target_set >= $suggested_daily_words) {
+    echo '<span class="text-success">' . number_format($suggested_daily_words, 0, ',', '.') . ' (Meta atingida!)</span>';
+    }
+    } else {
+    echo number_format($suggested_daily_words, 0, ',', '.');
+    }
+    ?>
+    </td>
+    </tr>
+    <?php endforeach; ?>
+    </tbody>
+    </table>
+    </div>
+    <?php endif; ?>
+    </div>
+
+    <div class="video-card">
+    <div class="card-header">
+    <h2><i class="fas fa-list"></i> Lista de projetos</h2>
+
+    <div class="search-filters">
+    <form method="GET" class="search-form">
+    <div class="search-group">
+    <input type="text" name="search" placeholder="Buscar projetos..."
+    value="<?php echo htmlspecialchars($search); ?>">
+    <select name="status">
+    <option value="">Todos os status</option>
+    <option value="pending" <?php echo ($status_filter == 'pending') ? 'selected' : ''; ?>>Pendente</option>
+    <option value="in_progress" <?php echo ($status_filter == 'in_progress') ? 'selected' : ''; ?>>Em andamento</option>
+    <option value="completed" <?php echo ($status_filter == 'completed') ? 'selected' : ''; ?>>Concluído</option>
+    <option value="cancelled" <?php echo ($status_filter == 'cancelled') ? 'selected' : ''; ?>>Cancelado</option>
+    </select>
+    <button type="submit" class="page-btn">
+    <i class="fas fa-search"></i>
+    </button>
+    <?php if ($search || $status_filter): ?>
+    <a href="projects.php" class="page-btn">
+    <i class="fas fa-times"></i>
+    </a>
+    <?php endif; ?>
+    </div>
+    </form>
+    </div>
+    </div>
+
+    <?php if (empty($projects)): ?>
+    <div class="alert-warning">
+    <i class="fas fa-info-circle"></i>
+    <?php echo ($search || $status_filter) ? 'Nenhum projeto encontrado com os critérios de busca.' : 'Nenhum projeto cadastrado ainda.'; ?>
+    </div>
+    <?php else: ?>
+    <div class="table-responsive">
+    <table class="data-table">
+    <thead>
+    <tr>
+    <th><i class="fas fa-project-diagram"></i> Projeto</th>
+    <th><i class="fas fa-receipt"></i> PO</th>
+    <th><i class="fas fa-user"></i> Cliente</th>
+    <th><i class="fas fa-language"></i> Idiomas</th>
+    <th><i class="fas fa-flag"></i> Status</th>
+    <th><i class="fas fa-money-bill-wave"></i> Valor</th>
+    <th><i class="fas fa-calendar-check"></i> Prazo</th>
+    <th><i class="fas fa-cogs"></i> Ações</th>
+    </tr>
+    </thead>
+    <tbody>
+    <?php foreach ($projects as $project): ?>
+    <tr>
+    <td>
+    <div class="project-info">
+    <span class="text-primary"><?php echo htmlspecialchars($project['project_name']); ?></span>
+    <span class="project-type"><?php echo ucfirst($project['service_type']); ?></span>
+    </div>
+    </td>
+    <td><?php echo htmlspecialchars($project['po_number'] ?: '-'); ?></td>
+    <td><?php echo htmlspecialchars($project['company_name']); ?></td>
+    <td class="language-pair">
+    <?php echo $project['source_language']; ?> → <?php echo $project['target_language']; ?>
+    </td>
+    <td>
+    <span class="status-badge status-<?php echo $project['status']; ?>"><?php
+    $status_labels = [
+    'pending' => 'Pendente',
+    'in_progress' => 'Em andamento',
+    'completed' => 'Concluído',
+    'cancelled' => 'Cancelado',
+    'on_hold' => 'Pausado'
+    ];
+    echo $status_labels[$project['status']] ?? $project['status'];
+    ?></span>
+    </td>
+    <td><?php echo formatCurrency($project['total_amount'], $project['currency'] ?? 'BRL'); ?></td>
+    <td>
+    <?php if ($project['deadline']): ?>
+    <?php echo date('d/m/Y', strtotime($project['deadline'])); ?>
+    <?php else: ?>
+    -
+    <?php endif; ?>
+    </td>
+    <td>
+    <div class="action-buttons">
+    <a href="?edit=<?php echo $project['id']; ?>" class="page-btn" title="Editar">
+    <i class="fas fa-edit"></i>
+    </a>
+    <?php if ($project['status'] != 'completed'): ?>
+    <form method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja marcar o projeto como concluído?')">
+    <input type="hidden" name="action" value="complete_project">
+    <input type="hidden" name="project_id" value="<?php echo $project['id']; ?>">
+    <button type="submit" class="page-btn btn-success" title="Concluir">
+    <i class="fas fa-check-circle"></i>
+    </button>
+    </form>
+    <?php endif; ?>
+    <form method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja gerar uma fatura para o projeto? Isso criará uma nova fatura.')">
+    <input type="hidden" name="action" value="generate_invoice">
+    <input type="hidden" name="project_id" value="<?php echo $project['id']; ?>">
+    <button type="submit" class="page-btn" title="Gerar Fatura">
+    <i class="fas fa-file-invoice"></i>
+    </button>
+    </form>
+    <form method="POST" style="display: inline;" onsubmit="return confirm('Tem certeza que deseja excluir este projeto?')">
+    <input type="hidden" name="action" value="delete_project">
+    <input type="hidden" name="project_id" value="<?php echo $project['id']; ?>">
+    <button type="submit" class="page-btn btn-danger" title="Excluir">
+    <i class="fas fa-trash"></i>
+    </button>
+    </form>
+    </div>
+    </td>
+    </tr>
+    <?php endforeach; ?>
+    </tbody>
+    </table>
+    </div>
+    <?php endif; ?>
+    </div>
+</div>
+
+<script>
+// Referências aos campos do formulário
+const wordCountInput = document.getElementById('word_count');
+const ratePerWordInput = document.getElementById('rate_per_word');
+const totalCalculatedInput = document.getElementById('total_calculated');
+const negotiatedValueInput = document.getElementById('negotiated_value');
+const currencySelect = document.getElementById('currency');
+const clientIdSelect = document.getElementById('client_id');
+
+function calculateTotal() {
+    const wordCount = parseFloat(wordCountInput.value) || 0;
+    const ratePerWord = parseFloat(ratePerWordInput.value) || 0;
+    const total = wordCount * ratePerWord;
+
+    totalCalculatedInput.value = formatCurrencyForDisplay(total, currencySelect.value);
+}
+
+// Helper para formatar moeda no JS
+function formatCurrencyForDisplay(amount, currency) {
+    if (isNaN(amount)) {
+    amount = 0;
+    }
+    switch (currency) {
+    case 'BRL':
+    return 'R$ ' + amount.toFixed(2).replace('.', ',');
+    case 'USD':
+    return '$' + amount.toFixed(2);
+    case 'EUR':
+    return '€' + amount.toFixed(2).replace('.', ',');
+    default:
+    return amount.toFixed(2);
+    }
+}
+
+function handleRateInput() {
+    calculateTotal(); 
+    if (negotiatedValueInput.value === '') {
+    currencySelect.value = currencySelect.value;
+    }
+}
+
+// Sincronizar moeda do projeto com a moeda padrão do cliente
+clientIdSelect.addEventListener('change', function () {
+    const selectedOption = this.options[this.selectedIndex];
+    const defaultCurrency = selectedOption.dataset.currency;
+    if (defaultCurrency) {
+    currencySelect.value = defaultCurrency;
+    }
+    handleRateInput();
+});
+
+function updateCurrencyForNegotiated() {
+    if (negotiatedValueInput.value !== '') {
+    wordCountInput.disabled = true;
+    ratePerWordInput.disabled = true;
+    } else {
+    wordCountInput.disabled = false;
+    ratePerWordInput.disabled = false;
+    calculateTotal();
+    const selectedOption = clientIdSelect.options[clientIdSelect.selectedIndex];
+    const defaultCurrency = selectedOption.dataset.currency;
+    if (defaultCurrency) {
+    currencySelect.value = defaultCurrency;
+    }
+    }
+}
+negotiatedValueInput.addEventListener('input', updateCurrencyForNegotiated);
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', function () {
+    calculateTotal();
+    if (negotiatedValueInput.value !== '') {
+    wordCountInput.disabled = true;
+    ratePerWordInput.disabled = true;
+    } else {
+    handleRateInput(); 
+    }
+
+    if (clientIdSelect.value) {
+    const selectedOption = clientIdSelect.options[clientIdSelect.selectedIndex];
+    const defaultCurrency = selectedOption.dataset.currency;
+    if (defaultCurrency) {
+    currencySelect.value = defaultCurrency;
+    if (!negotiatedValueInput.value) {
+    currencySelect.value = defaultCurrency;
+    }
+    }
+    }
+});
+</script>
+
+<?php
+include __DIR__ . '/../vision/includes/footer.php';
+?>
