@@ -78,3 +78,8 @@ agenthub/agents/youtube/db
 
 # Mobile development
 android-sdk/ t101-visual/.git/objects/pack/pack-ffa859113bd6cb115e920d93c4ed3a0f0903cb40.pack
+-e 
+# Environment files
+*.env
+*.env.*
+t101-visual/.git/objects/pack/pack-ffa859113bd6cb115e920d93c4ed3a0f0903cb40.pack
