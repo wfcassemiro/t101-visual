@@ -87,3 +87,7 @@ t101-visual/.git/objects/pack/pack-ffa859113bd6cb115e920d93c4ed3a0f0903cb40.pack
 # Environment files
 *.env
 *.env.*
+-e 
+# Environment files
+*.env
+*.env.*
